@@ -1,0 +1,206 @@
+﻿@page "/scouting"
+@using System.Text.RegularExpressions
+
+@inject ScoutingService scoutingService
+
+
+<style>
+
+    body {
+        background-color: #F0F8FF; 
+    }
+
+.scouting-page {
+    font-family: 'Arial', sans-serif; 
+    max-width: 900px; 
+    margin: 20px auto; 
+    padding: 20px;
+    border: 1px solid #ddd; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+    background-color: #006622
+}
+
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #f0f0f0; 
+}
+
+.btn {
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px; 
+}
+
+.btn-primary {
+    background-color: #007bff; 
+}
+
+.btn-danger {
+    background-color: #dc3545; 
+}
+
+
+footer {
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+footer input[type="text"], 
+footer input[type="number"],
+footer select {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+} 
+
+
+</style>
+
+
+<h3>Scouting System</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>GoalScored</th>
+            <th>Assists</th>
+            <th>Position</th>
+            <th>League</th>
+            <th>Team</th>
+            <th>Update Goals</th>
+            <th>Update Assists</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var player in players)
+        {
+                <tr>
+                    <td>@player.Id</td>
+                    <td>@player.Name</td>
+                    <td>@player.Age</td>
+                    <td>@player.GoalsScored</td>
+                    <td>@player.Assists</td>
+                    <td>@player.Position</td>
+                    <td>@player.League</td>
+                    <td>@player.Team</td>
+                    <td>
+                        <input type="number" @bind="@player.GoalsScoredInput" />
+                        <button class="btn btn-primary" @onclick="@(() => UpdateGoals(player))">Update</button>
+                    </td>
+                    <td>
+                        <input type="number" @bind="@player.AssistsInput" />
+                        <button class="btn btn-primary" @onclick="@(() => UpdateAssists(player))">Update</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="@(() => DeletePlayer(player.Id))">Delete</button>
+                    </td>
+                </tr>
+        }
+    </tbody>
+</table>
+
+<footer>
+    <h4>Add New Player</h4>
+    <input type="text" @bind="newPlayer.Name" placeholder="Name"/>
+<input type="number" @bind="newPlayer.Age" @oninput="ValidateAge" placeholder="Age" />
+    <input type="number" @bind="newPlayer.GoalsScored" placeholder="GoalsScored" />
+    <input type="number" @bind="newPlayer.Assists" placeholder="Assists" />
+    <select @bind="newPlayer.Position">
+        <option value="">Select Position</option>
+        <option value="Goalkeeper">Goalkeeper</option>
+        <option value="Defender">Defender</option>
+        <option value="Midfielder">Midfielder</option>
+        <option value="Forward">Forward</option>
+    </select>
+    <select @bind="newPlayer.League">
+        <option value="">Select League</option>
+        <option value="Premier League">Premier League</option>
+        <option value="La Liga">La Liga</option>
+        <option value="Bundesliga">Bundesliga</option>
+        <option value="Serie A">Serie A</option>
+        <option value="Ligue 1">Ligue 1</option>
+        <option value="Primeira Liga">Primeira Liga</option>
+        <option value="Eredivisie">Eredivisie</option>
+        <option value="Russian Premier League">Russian Premier League</option>
+        <option value="Brasileirão Série A">Brasileirão Série A</option>
+        <option value="Argentine Primera División">Argentine Primera División</option>
+    </select>
+    <input type="text" @bind="newPlayer.Team" placeholder="Team" />
+    <button class="btn btn-primary" @onclick="@AddPlayer" disabled="@string.IsNullOrWhiteSpace(newPlayer.Name)">Add Player</button>
+</footer>
+
+@code {
+    List<Player> players;
+    Player newPlayer = new Player();
+
+
+    void ValidateAge(ChangeEventArgs e)
+    {
+        string input = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(input))
+        {
+            string pattern = @"^\d+$";
+            if (!Regex.IsMatch(input, pattern))
+            {
+                newPlayer.Age = null;
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        players = scoutingService.GetPlayers().ToList();
+    }
+
+    void AddPlayer()
+    {
+        scoutingService.AddPlayer(newPlayer);
+        players = scoutingService.GetPlayers().ToList();
+        newPlayer = new Player();
+    }
+
+    void DeletePlayer(int playerId)
+    {
+        scoutingService.DeletePlayer(playerId);
+        players = scoutingService.GetPlayers().ToList();
+    }
+
+    void UpdateGoals(Player player)
+    {
+        scoutingService.UpdateGoalsScored(player.Id, player.GoalsScoredInput);
+        players = scoutingService.GetPlayers().ToList();
+    }
+
+    void UpdateAssists(Player player)
+    {
+        scoutingService.UpdateAssists(player.Id, player.AssistsInput);
+        players = scoutingService.GetPlayers().ToList();
+    }
+
+}
